@@ -64,6 +64,14 @@ UnitOfWorkService is shared infrastructure and is not named per domain.
 
 Use UnitOfWorkService for simple CRUD persistence.
 
+Standard UnitOfWorkService methods:
+
+```text
+persist($model)
+remove($model)
+flush()
+```
+
 ## Repositories
 
 Repositories are thin wrappers around `LaravelCommon\App\Repositories\Repository`.

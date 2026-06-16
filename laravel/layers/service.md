@@ -34,8 +34,10 @@ final class ProductApprovalService
     public function approve(Product $product): Product
     {
         $product->approve();
+        $this->unitOfWork->persist($product);
+        $this->unitOfWork->flush();
 
-        return $this->unitOfWork->save($product);
+        return $product;
     }
 }
 ```

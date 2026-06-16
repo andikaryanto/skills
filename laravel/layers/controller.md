@@ -58,8 +58,12 @@ final class ProductController
 
     public function store(Request $request): ResourceCreatedResponse
     {
+        $product = $request->attributes->get('product');
+        $this->unitOfWork->persist($product);
+        $this->unitOfWork->flush();
+
         return new ResourceCreatedResponse(
-            $this->unitOfWork->save($request->attributes->get('product'))
+            $product
         );
     }
 }

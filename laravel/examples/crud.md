@@ -63,22 +63,31 @@ final class ProductController
 
     public function store(Request $request): ResourceCreatedResponse
     {
+        $product = $request->attributes->get('product');
+        $this->unitOfWork->persist($product);
+        $this->unitOfWork->flush();
+
         return new ResourceCreatedResponse(
-            $this->unitOfWork->save($request->attributes->get('product'))
+            $product
         );
     }
 
     public function update(Request $request): SuccessResponse
     {
+        $product = $request->attributes->get('product');
+        $this->unitOfWork->persist($product);
+        $this->unitOfWork->flush();
+
         return new SuccessResponse(
-            $this->unitOfWork->save($request->attributes->get('product'))
+            $product
         );
     }
 
     public function destroy(Request $request): SuccessResponse
     {
         $product = $request->attributes->get('product');
-        $this->unitOfWork->delete($product);
+        $this->unitOfWork->remove($product);
+        $this->unitOfWork->flush();
 
         return new SuccessResponse(
             $product

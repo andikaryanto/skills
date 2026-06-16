@@ -99,7 +99,7 @@ Controllers orchestrate HTTP flow and select the response class.
 For simple CRUD:
 
 - Read with Query classes.
-- Persist with UnitOfWorkService.
+- Persist with UnitOfWorkService using `persist()` or `remove()`, then `flush()`.
 
 For complex business logic:
 
