@@ -52,7 +52,7 @@ Query tests are used to ensure complex data reads are correct.
 
 Minimum tests:
 
-- Main filters.
+- Main chainable filters.
 - Sorting.
 - Pagination.
 - Join or relation loading.

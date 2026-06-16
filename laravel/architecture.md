@@ -122,7 +122,9 @@ Repositories are not used for complex listings, dynamic filters, joins, aggregat
 
 ### Queries
 
-Query classes are used for complex data reads.
+Query classes are used for complex data reads and must extend `LaravelCommon\App\Queries\Query`.
+
+Every Query class must define `identityClass()` and return the model class it represents.
 
 Example Query responsibilities:
 
@@ -134,6 +136,7 @@ Example Query responsibilities:
 - Aggregation.
 - Report query.
 
+Query classes expose chainable domain filter methods, such as `whereClinicCategory(...)`.
 Query classes must return data that is ready for Services to process, not HTTP responses.
 
 ### Models

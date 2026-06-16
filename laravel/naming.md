@@ -93,11 +93,13 @@ ProductQuery
 Common Query methods:
 
 ```text
-paginate(array $filters)
-search(array $filters)
-findWithRelations(int|string $id)
-summary(array $filters)
+identityClass()
+whereStatus(string $status)
+whereCategory(Category $category)
+whereCreatedBetween(DateTimeInterface $from, DateTimeInterface $to)
 ```
+
+Query filter methods should be chainable and return the concrete Query class.
 
 ## Middlewares
 

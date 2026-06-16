@@ -159,7 +159,11 @@ final class ProductService
 
     public function getAll(array $filters): LengthAwarePaginator
     {
-        return $this->query->paginate($filters);
+        if (isset($filters['status'])) {
+            $this->query->whereStatus($filters['status']);
+        }
+
+        return $this->query->paginate();
     }
 
     public function create(Product $product): Product
@@ -192,7 +196,12 @@ Query classes are used for complex database access:
 - Aggregation.
 - Report query.
 
-Query classes must return data ready for Services to use, not HTTP responses.
+Query classes must:
+
+- Extend `LaravelCommon\App\Queries\Query`.
+- Define `identityClass()` and return the model class.
+- Expose chainable domain filter methods.
+- Return data ready for Services to use, not HTTP responses.
 
 ### 8. Implement ViewModel When Needed
 

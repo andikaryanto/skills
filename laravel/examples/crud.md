@@ -90,7 +90,11 @@ final class ProductService
 
     public function getAll(array $filters): LengthAwarePaginator
     {
-        return $this->query->paginate($filters);
+        if (isset($filters['status'])) {
+            $this->query->whereStatus($filters['status']);
+        }
+
+        return $this->query->paginate();
     }
 
     public function get(Product $product): Product
@@ -144,19 +148,25 @@ final class ProductRepository
 ## Query
 
 ```php
-final class ProductQuery
+final class ProductQuery extends Query
 {
-    public function paginate(array $filters): LengthAwarePaginator
+    public function identityClass(): string
     {
-        return Product::query()
-            ->when($filters['status'] ?? null, function (Builder $query, string $status): void {
-                $query->where('status', $status);
-            })
-            ->when($filters['search'] ?? null, function (Builder $query, string $search): void {
-                $query->where('name', 'like', "%{$search}%");
-            })
-            ->orderBy($filters['sort'] ?? 'created_at', $filters['direction'] ?? 'desc')
-            ->paginate($filters['per_page'] ?? 15);
+        return Product::class;
+    }
+
+    public function whereStatus(string $status): ProductQuery
+    {
+        $this->where('products.status', '=', $status);
+
+        return $this;
+    }
+
+    public function whereCategory(Category $category): ProductQuery
+    {
+        $this->where('products.category_id', '=', $category->getId());
+
+        return $this;
     }
 }
 ```
