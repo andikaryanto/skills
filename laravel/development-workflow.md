@@ -2,6 +2,14 @@
 
 Dokumen ini menjelaskan alur kerja pengembangan fitur Laravel berdasarkan aturan layer di `architecture.md`.
 
+See also:
+
+- [Architecture](architecture.md)
+- [Naming Conventions](naming.md)
+- [API Response Standard](api-response.md)
+- [Testing Standard](testing.md)
+- [CRUD Example](examples/crud.md)
+
 ## Goal
 
 - Controller tetap tipis dan hanya mengatur HTTP flow.
@@ -42,7 +50,7 @@ Gunakan middleware validator dan hydrator sesuai kebutuhan:
 Route::post('/products', [ProductController::class, 'store'])
     ->middleware([
         ProductRequestValidatorMiddleware::class,
-        ProductHydrator::class,
+        ProductHydratorMiddleware::class,
     ]);
 ```
 
@@ -51,9 +59,8 @@ Route parameter yang perlu diubah menjadi entity juga harus melalui hydrator:
 ```php
 Route::patch('/products/{product}', [ProductController::class, 'update'])
     ->middleware([
-        ProductRouteHydrator::class,
         ProductRequestValidatorMiddleware::class,
-        ProductHydrator::class,
+        ProductHydratorMiddleware::class,
     ]);
 ```
 
@@ -71,12 +78,12 @@ Validator bertanggung jawab untuk:
 
 #### Hydrator Middleware
 
-Gunakan `Http/Middlewares/{Domain}Hydrator` dan extend `HydratorMiddleware`.
+Gunakan `Http/Middlewares/{Domain}HydratorMiddleware` dan extend `HydratorMiddleware`.
 
 Hydrator bertanggung jawab untuk:
 
-- Mengubah request body menjadi entity atau DTO yang siap dipakai Service.
-- Mengubah route parameter menjadi entity.
+- Mengisi model dari request body.
+- Mengambil entity dari route parameter ketika route memiliki `{domain}`.
 - Menyimpan hasil hydrasi ke request attribute.
 
 ### 4. Implement Controller
