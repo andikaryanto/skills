@@ -11,14 +11,26 @@ This documentation defines reusable Laravel architecture and development workflo
 - [Testing](testing.md): testing standards for endpoints, services, repositories, and queries.
 - [CRUD Example](examples/crud.md): example implementation for a simple CRUD domain.
 
+## Layer Guides
+
+- [Controller](layers/controller.md)
+- [Middleware](layers/middleware.md)
+- [Model](layers/model.md)
+- [Repository](layers/repository.md)
+- [Query](layers/query.md)
+- [Service](layers/service.md)
+- [UnitOfWork Persistence](layers/unit-of-work.md)
+- [ViewModel](layers/view-model.md)
+
 ## Recommended Reading Order
 
 1. `architecture.md`
 2. `development-workflow.md`
-3. `naming.md`
-4. `api-response.md`
-5. `testing.md`
-6. `examples/crud.md`
+3. `layers/*.md`
+4. `naming.md`
+5. `api-response.md`
+6. `testing.md`
+7. `examples/crud.md`
 
 ## Core Principles
 

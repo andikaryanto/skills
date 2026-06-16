@@ -1,10 +1,19 @@
 # Laravel Development Workflow
 
-This document describes the Laravel feature development workflow based on the layer rules in `architecture.md`.
+This document describes the end-to-end Laravel feature development workflow.
+Layer-specific implementation details live in `layers/`.
 
 See also:
 
 - [Architecture](architecture.md)
+- [Controller Layer](layers/controller.md)
+- [Middleware Layer](layers/middleware.md)
+- [Model Layer](layers/model.md)
+- [Repository Layer](layers/repository.md)
+- [Query Layer](layers/query.md)
+- [Service Layer](layers/service.md)
+- [UnitOfWork Persistence](layers/unit-of-work.md)
+- [ViewModel Layer](layers/view-model.md)
 - [Naming Conventions](naming.md)
 - [API Response Standard](api-response.md)
 - [Testing Standard](testing.md)
@@ -15,16 +24,17 @@ See also:
 - Controllers stay thin and only manage HTTP flow.
 - Complex business logic belongs in Services.
 - Simple database access belongs in Repositories.
-- Complex queries belong in Query classes.
+- Complex database reads belong in Query classes.
 - Simple CRUD persistence belongs in UnitOfWorkService.
-- Request/entity validation and hydration are handled by Middleware.
-- All responses use response classes from `LaravelCommon\Responses`.
+- Request validation and hydration are handled by Middleware.
+- Models expose explicit getters and setters for testability.
+- API responses use response classes from `LaravelCommon\Responses`.
 
 ## Feature Workflow
 
 ### 1. Define the Feature Contract
 
-Before writing the implementation, define the feature contract:
+Before writing implementation, define:
 
 - Route and HTTP method.
 - Request payload, query parameters, and route parameters.
@@ -45,224 +55,97 @@ Response: ResourceCreatedResponse
 
 Add the route in the appropriate route file.
 
-Use validator and hydrator middleware as needed:
+Use validator and hydrator middleware as needed.
+See [Middleware Layer](layers/middleware.md).
+
+### 3. Add Validator Middleware
+
+Use action-based request validation methods such as `post()` and `patch()`.
+
+Route usage example:
 
 ```php
-Route::post('/products', [ProductController::class, 'store'])
-    ->middleware([
-        ProductRequestValidatorMiddleware::class . ':post',
-        ProductHydratorMiddleware::class,
-    ]);
+ProductRequestValidatorMiddleware::class . ':post'
 ```
 
-Route parameters that need to be resolved into entities must also go through the hydrator:
+See [Middleware Layer](layers/middleware.md).
 
-```php
-Route::patch('/products/{product}', [ProductController::class, 'update'])
-    ->middleware([
-        ProductRequestValidatorMiddleware::class . ':patch',
-        ProductHydratorMiddleware::class,
-    ]);
-```
+### 4. Add Hydrator Middleware
 
-### 3. Create or Update Middleware
+Hydrate request body and route parameters into the request attributes.
 
-#### Validator Middleware
+See [Middleware Layer](layers/middleware.md).
 
-Use `Http/Middleware/RequestValidator/{Domain}RequestValidatorMiddleware` and extend `RequestValidatorMiddleware`.
+### 5. Add Repository or Query
 
-The validator is responsible for:
+Use a Repository for simple model persistence infrastructure.
+Use a Query class for complex reads, filters, and pagination.
 
-- Validating the request body.
-- Validating query parameters.
-- Rejecting invalid requests before they reach the controller.
-- Defining validation rules in methods named after actions, such as `post()` and `patch()`.
-- Being called from routes with the method name as the middleware parameter.
+See:
 
-#### Hydrator Middleware
+- [Repository Layer](layers/repository.md)
+- [Query Layer](layers/query.md)
 
-Use `Http/Middlewares/{Domain}HydratorMiddleware` and extend `HydratorMiddleware`.
+### 6. Add Model Getters and Setters
 
-The hydrator is responsible for:
+Expose explicit getter and setter methods for fields used by hydrators, queries, services, or tests.
 
-- Filling the model from the request body.
-- Resolving the entity from route parameters when the route has `{domain}`.
-- Storing the hydrated result in request attributes.
+See [Model Layer](layers/model.md).
 
-### 4. Implement Controller
+### 7. Implement Controller
 
-Controllers may only:
+Controllers orchestrate HTTP flow and select the response class.
 
-- Read validated or hydrated input from the request.
-- Call Queries and UnitOfWorkService for simple CRUD.
-- Call Services for complex business logic.
-- Return the appropriate response class.
+For simple CRUD:
 
-Response rule:
+- Read with Query classes.
+- Persist with UnitOfWorkService.
 
-- `GET` collection: use `LaravelCommon\Responses\PagedJsonResponse`.
-- `GET`, `PATCH`, `DELETE` single entity: use `LaravelCommon\Responses\SuccessResponse`.
-- `POST` single entity: use `LaravelCommon\Responses\ResourceCreatedResponse`.
+For complex business logic:
 
-Controller structure example:
+- Call a domain Service.
 
-```php
-final class ProductController
-{
-    public function __construct(
-        private readonly ProductQuery $query,
-        private readonly UnitOfWorkService $unitOfWork,
-    ) {
-    }
+See:
 
-    public function index(Request $request): PagedJsonResponse
-    {
-        $filters = $request->query();
+- [Controller Layer](layers/controller.md)
+- [UnitOfWork Persistence](layers/unit-of-work.md)
+- [Service Layer](layers/service.md)
 
-        if (isset($filters['status'])) {
-            $this->query->whereStatus($filters['status']);
-        }
+### 8. Add Service Only for Complex Logic
 
-        return new PagedJsonResponse(
-            $this->query->paginate()
-        );
-    }
+Do not create a domain Service only to wrap simple CRUD.
 
-    public function store(Request $request): ResourceCreatedResponse
-    {
-        return new ResourceCreatedResponse(
-            $this->unitOfWork->save($request->attributes->get('product'))
-        );
-    }
-}
-```
+Create a Service when the feature has business rules, orchestration, transactions, calculations, or state transitions.
 
-### 5. Use UnitOfWorkService for Simple CRUD Persistence
+See [Service Layer](layers/service.md).
 
-Simple CRUD create, update, and delete operations are persisted through UnitOfWorkService.
+### 9. Add ViewModel When Needed
 
-Do not create a domain Service only to wrap simple CRUD persistence.
+Use a ViewModel only when the response shape differs from the Model.
 
-### 6. Implement Service Only for Complex Logic
+See [ViewModel Layer](layers/view-model.md).
 
-Services contain complex business logic and orchestration.
-
-Services may:
-
-- Call Repositories.
-- Call Query classes.
-- Call UnitOfWorkService.
-- Run database transactions.
-- Enforce business rules.
-- Transform entities into ViewModels when needed.
-
-Services must not:
-
-- Read raw HTTP requests directly.
-- Return HTTP responses.
-- Contain request validation that belongs in Middleware.
-
-Example:
-
-```php
-final class ProductApprovalService
-{
-    public function __construct(
-        private readonly UnitOfWorkService $unitOfWork,
-    ) {
-    }
-
-    public function approve(Product $product): Product
-    {
-        $product->approve();
-
-        return $this->unitOfWork->save($product);
-    }
-}
-```
-
-### 7. Implement Repository
-
-Repositories are thin wrappers around `LaravelCommon\App\Repositories\Repository`.
-
-Each Repository passes its model class to the parent constructor:
-
-```php
-final class ProductRepository extends Repository
-{
-    public function __construct()
-    {
-        parent::__construct(Product::class);
-    }
-}
-```
-
-Repositories are not used for complex queries with many filters, joins, aggregations, or custom pagination. Use Query classes for those cases.
-
-### 8. Implement Query Class
-
-Query classes are used for complex database access:
-
-- Listing with filters and pagination.
-- Joins across tables.
-- Search.
-- Sorting.
-- Aggregation.
-- Report query.
-
-Query classes must:
-
-- Extend `LaravelCommon\App\Queries\Query`.
-- Define `identityClass()` and return the model class.
-- Expose chainable domain filter methods.
-- Return data ready for Controllers or Services to use, not HTTP responses.
-
-### 9. Implement ViewModel When Needed
-
-Use `ViewModels` when the response needs a shape that differs from the Model.
-
-ViewModels are suitable for:
-
-- Hiding internal fields.
-- Combining multiple fields.
-- Normalizing response formats.
-- Preparing data for API consumers.
-
-### 10. Implement Model Getters and Setters
-
-Models should expose explicit getter and setter methods for fields that are used by hydrators, services, queries, or tests.
-
-Use getters and setters instead of direct attribute access in domain code when possible. This keeps models easier to mock in tests.
-
-Setter methods should return the model instance.
-
-### 11. Testing Workflow
+### 10. Add Tests
 
 Minimum tests for a new feature:
 
 - Feature test for the endpoint happy path.
 - Feature test for validation errors.
 - Feature test for not found or unauthorized cases when relevant.
-- Unit test for Services when business rules are complex enough.
-- Query class test when filters, sorting, or pagination are complex.
+- Service test for complex business rules.
+- Query test for complex filters, sorting, or pagination.
 
-Checklist test per method:
+See [Testing Standard](testing.md).
 
-- `GET collection`: data is paginated, filters work, response shape is correct.
-- `GET single`: entity is found, not found is handled.
-- `POST`: validation runs, entity is created, response uses created response.
-- `PATCH`: validation runs, entity is updated, response is successful.
-- `DELETE`: entity is deleted or marked as deleted, response is successful.
-
-### 12. Review Checklist
+### 11. Review Checklist
 
 Before merging, ensure:
 
 - Controllers do not contain business logic.
-- Services do not read `Request` directly.
 - Services are not created only to wrap simple CRUD.
+- Services do not read `Request` directly.
 - Repositories only contain simple database access.
-- Complex queries are not placed in Repositories.
+- Complex reads are placed in Query classes.
 - Validator and hydrator middleware are used for request/route entities.
 - Models expose getter and setter methods for fields used by hydrators or domain logic.
 - Response classes follow method rules.
@@ -276,10 +159,9 @@ Before merging, ensure:
 2. Validator Middleware
 3. Hydrator Middleware
 4. Repository or Query
-5. UnitOfWork persistence
+5. Model getters and setters
 6. Controller
-7. Model getters and setters
-8. ViewModel
-9. Tests
-
-This order keeps the HTTP contract clear from the start, then moves implementation from input, to persistence or domain logic, to response.
+7. UnitOfWork persistence
+8. Service, only for complex logic
+9. ViewModel, when needed
+10. Tests
