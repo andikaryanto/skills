@@ -40,6 +40,12 @@ Service tests are used when business logic is not safe enough to test only throu
 
 Simple CRUD persistence through UnitOfWorkService does not require a domain Service unit test.
 
+## Model Tests
+
+Model getter and setter methods should stay simple, but relation wrappers and non-trivial casts should be covered when they affect behavior.
+
+Mocking model getters and setters is allowed in Service tests when the Service only needs the model contract.
+
 Examples of logic that needs unit tests:
 
 - State transition.

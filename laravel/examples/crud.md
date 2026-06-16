@@ -131,6 +131,86 @@ final class ProductQuery extends Query
 }
 ```
 
+## Model
+
+```php
+final class Product extends BaseModel
+{
+    protected BelongsToRelation $category;
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    public function __construct(array $attributes = [])
+    {
+        $this->category = new BelongsToRelation($this, Category::class, 'category_id');
+
+        parent::__construct($attributes);
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): Product
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    public function getSku(): string
+    {
+        return $this->sku;
+    }
+
+    public function setSku(string $sku): Product
+    {
+        $this->sku = $sku;
+
+        return $this;
+    }
+
+    public function getPrice(): float
+    {
+        return (float) $this->price;
+    }
+
+    public function setPrice(float $price): Product
+    {
+        $this->price = $price;
+
+        return $this;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): Product
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function setCategory(Category $category): Product
+    {
+        $this->category->set($category);
+
+        return $this;
+    }
+
+    public function getCategory(): Category
+    {
+        return $this->category->get();
+    }
+}
+```
+
 ## Validator Middleware
 
 ```php

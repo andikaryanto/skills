@@ -228,7 +228,15 @@ ViewModels are suitable for:
 - Normalizing response formats.
 - Preparing data for API consumers.
 
-### 10. Testing Workflow
+### 10. Implement Model Getters and Setters
+
+Models should expose explicit getter and setter methods for fields that are used by hydrators, services, queries, or tests.
+
+Use getters and setters instead of direct attribute access in domain code when possible. This keeps models easier to mock in tests.
+
+Setter methods should return the model instance.
+
+### 11. Testing Workflow
 
 Minimum tests for a new feature:
 
@@ -246,7 +254,7 @@ Checklist test per method:
 - `PATCH`: validation runs, entity is updated, response is successful.
 - `DELETE`: entity is deleted or marked as deleted, response is successful.
 
-### 11. Review Checklist
+### 12. Review Checklist
 
 Before merging, ensure:
 
@@ -256,6 +264,7 @@ Before merging, ensure:
 - Repositories only contain simple database access.
 - Complex queries are not placed in Repositories.
 - Validator and hydrator middleware are used for request/route entities.
+- Models expose getter and setter methods for fields used by hydrators or domain logic.
 - Response classes follow method rules.
 - Class naming is consistent with the domain.
 - Error handling is explicit for important cases.
@@ -269,7 +278,8 @@ Before merging, ensure:
 4. Repository or Query
 5. UnitOfWork persistence
 6. Controller
-7. ViewModel
-8. Tests
+7. Model getters and setters
+8. ViewModel
+9. Tests
 
 This order keeps the HTTP contract clear from the start, then moves implementation from input, to persistence or domain logic, to response.

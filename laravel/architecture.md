@@ -155,16 +155,30 @@ Query classes must return data that is ready for Services to process, not HTTP r
 
 ### Models
 
-Models represent database data and relationships.
+Models represent database data and relationships and should extend `LaravelCommon\App\Models\BaseModel`.
 
 Models may contain:
 
 - Relationships.
 - Casts.
 - Simple scopes.
-- Accessors or mutators that are truly part of the data model.
+- Getter and setter methods for model fields.
+- Relation wrapper objects such as `BelongsToRelation` when the model needs testable relation access.
 
 Models must not contain complex business process orchestration.
+
+Getter and setter methods are preferred over direct attribute access in domain code because they make models easier to mock in tests.
+
+Setter methods should return `$this` for chaining:
+
+```php
+public function setName(string $name): Product
+{
+    $this->name = $name;
+
+    return $this;
+}
+```
 
 ### ViewModels
 

@@ -140,6 +140,21 @@ sourceAccount
 targetAccount
 ```
 
+## Models
+
+Models expose explicit getter and setter methods for fields used by application code.
+
+```text
+getName()
+setName(string $name)
+getIsActive()
+setIsActive(bool $isActive)
+getCategory()
+setCategory(Category $category)
+```
+
+Setter methods should return the concrete model class.
+
 ## Routes
 
 Use plural kebab-case for resource routes.
