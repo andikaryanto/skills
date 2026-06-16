@@ -38,6 +38,8 @@ For each request validator, test at least:
 
 Service tests are used when business logic is not safe enough to test only through endpoints.
 
+Simple CRUD persistence through UnitOfWorkService does not require a domain Service unit test.
+
 Examples of logic that needs unit tests:
 
 - State transition.

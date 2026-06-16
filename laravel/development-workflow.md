@@ -13,9 +13,10 @@ See also:
 ## Goal
 
 - Controllers stay thin and only manage HTTP flow.
-- Business logic belongs in Services.
+- Complex business logic belongs in Services.
 - Simple database access belongs in Repositories.
 - Complex queries belong in Query classes.
+- Simple CRUD persistence belongs in UnitOfWorkService.
 - Request/entity validation and hydration are handled by Middleware.
 - All responses use response classes from `LaravelCommon\Responses`.
 
@@ -93,13 +94,14 @@ The hydrator is responsible for:
 Controllers may only:
 
 - Read validated or hydrated input from the request.
-- Call Services.
+- Call Queries and UnitOfWorkService for simple CRUD.
+- Call Services for complex business logic.
 - Return the appropriate response class.
 
 Response rule:
 
-- `GET` collection: use `LaravelCommon\Responses\PagedJsonResponse` and the Service function `getAll`.
-- `GET`, `PATCH`, `DELETE` single entity: use `LaravelCommon\Responses\SuccessResponse` and the Service function `get`.
+- `GET` collection: use `LaravelCommon\Responses\PagedJsonResponse`.
+- `GET`, `PATCH`, `DELETE` single entity: use `LaravelCommon\Responses\SuccessResponse`.
 - `POST` single entity: use `LaravelCommon\Responses\ResourceCreatedResponse`.
 
 Controller structure example:
@@ -108,34 +110,48 @@ Controller structure example:
 final class ProductController
 {
     public function __construct(
-        private readonly ProductService $service,
+        private readonly ProductQuery $query,
+        private readonly UnitOfWorkService $unitOfWork,
     ) {
     }
 
     public function index(Request $request): PagedJsonResponse
     {
+        $filters = $request->query();
+
+        if (isset($filters['status'])) {
+            $this->query->whereStatus($filters['status']);
+        }
+
         return new PagedJsonResponse(
-            $this->service->getAll($request->query())
+            $this->query->paginate()
         );
     }
 
     public function store(Request $request): ResourceCreatedResponse
     {
         return new ResourceCreatedResponse(
-            $this->service->create($request->attributes->get('product'))
+            $this->unitOfWork->save($request->attributes->get('product'))
         );
     }
 }
 ```
 
-### 5. Implement Service
+### 5. Use UnitOfWorkService for Simple CRUD Persistence
 
-Services contain business logic and orchestration.
+Simple CRUD create, update, and delete operations are persisted through UnitOfWorkService.
+
+Do not create a domain Service only to wrap simple CRUD persistence.
+
+### 6. Implement Service Only for Complex Logic
+
+Services contain complex business logic and orchestration.
 
 Services may:
 
 - Call Repositories.
 - Call Query classes.
+- Call UnitOfWorkService.
 - Run database transactions.
 - Enforce business rules.
 - Transform entities into ViewModels when needed.
@@ -149,31 +165,23 @@ Services must not:
 Example:
 
 ```php
-final class ProductService
+final class ProductApprovalService
 {
     public function __construct(
-        private readonly ProductRepository $repository,
-        private readonly ProductQuery $query,
+        private readonly UnitOfWorkService $unitOfWork,
     ) {
     }
 
-    public function getAll(array $filters): LengthAwarePaginator
+    public function approve(Product $product): Product
     {
-        if (isset($filters['status'])) {
-            $this->query->whereStatus($filters['status']);
-        }
+        $product->approve();
 
-        return $this->query->paginate();
-    }
-
-    public function create(Product $product): Product
-    {
-        return $this->repository->save($product);
+        return $this->unitOfWork->save($product);
     }
 }
 ```
 
-### 6. Implement Repository
+### 7. Implement Repository
 
 Repositories are thin wrappers around `LaravelCommon\App\Repositories\Repository`.
 
@@ -191,7 +199,7 @@ final class ProductRepository extends Repository
 
 Repositories are not used for complex queries with many filters, joins, aggregations, or custom pagination. Use Query classes for those cases.
 
-### 7. Implement Query Class
+### 8. Implement Query Class
 
 Query classes are used for complex database access:
 
@@ -207,9 +215,9 @@ Query classes must:
 - Extend `LaravelCommon\App\Queries\Query`.
 - Define `identityClass()` and return the model class.
 - Expose chainable domain filter methods.
-- Return data ready for Services to use, not HTTP responses.
+- Return data ready for Controllers or Services to use, not HTTP responses.
 
-### 8. Implement ViewModel When Needed
+### 9. Implement ViewModel When Needed
 
 Use `ViewModels` when the response needs a shape that differs from the Model.
 
@@ -220,7 +228,7 @@ ViewModels are suitable for:
 - Normalizing response formats.
 - Preparing data for API consumers.
 
-### 9. Testing Workflow
+### 10. Testing Workflow
 
 Minimum tests for a new feature:
 
@@ -238,12 +246,13 @@ Checklist test per method:
 - `PATCH`: validation runs, entity is updated, response is successful.
 - `DELETE`: entity is deleted or marked as deleted, response is successful.
 
-### 10. Review Checklist
+### 11. Review Checklist
 
 Before merging, ensure:
 
 - Controllers do not contain business logic.
 - Services do not read `Request` directly.
+- Services are not created only to wrap simple CRUD.
 - Repositories only contain simple database access.
 - Complex queries are not placed in Repositories.
 - Validator and hydrator middleware are used for request/route entities.
@@ -258,9 +267,9 @@ Before merging, ensure:
 2. Validator Middleware
 3. Hydrator Middleware
 4. Repository or Query
-5. Service
+5. UnitOfWork persistence
 6. Controller
 7. ViewModel
 8. Tests
 
-This order keeps the HTTP contract clear from the start, then moves implementation from input, to domain logic, to response.
+This order keeps the HTTP contract clear from the start, then moves implementation from input, to persistence or domain logic, to response.

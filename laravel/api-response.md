@@ -24,13 +24,13 @@ Do not create manual responses with `response()->json()` for standard API endpoi
 
 ## Controller Rules
 
-Controllers only select the response class and pass data from Services.
+Controllers only select the response class and pass data from Queries, UnitOfWorkService, or Services.
 
 ```php
 public function show(Request $request): SuccessResponse
 {
     return new SuccessResponse(
-        $this->service->get($request->attributes->get('product'))
+        $request->attributes->get('product')
     );
 }
 ```
@@ -51,12 +51,12 @@ Collection endpoints must use the standard pagination response.
 public function index(Request $request): PagedJsonResponse
 {
     return new PagedJsonResponse(
-        $this->service->getAll($request->query())
+        $this->query->paginate()
     );
 }
 ```
 
-Filtering, sorting, and pagination are processed by Services and Query classes.
+Filtering, sorting, and pagination are processed by Query classes.
 
 ## Error Response
 

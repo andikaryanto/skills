@@ -10,7 +10,6 @@ Example for the `Product` domain:
 
 ```text
 ProductController
-ProductService
 ProductRepository
 ProductQuery
 ProductHydratorMiddleware
@@ -40,29 +39,30 @@ destroy -> DELETE
 
 ## Services
 
-Services use the singular domain name.
+Services are used only for complex business logic, not simple CRUD persistence.
+
+Services use the singular domain name plus the business action when possible.
 
 ```text
-ProductService
+ProductApprovalService
+ProductPublicationService
 ```
 
-Standard Service methods:
+Service methods should be named after business actions:
 
 ```text
-getAll(array $filters)
-get(int|string $id)
-create(Entity|Model $entity)
-update(Entity|Model $entity)
-delete(Entity|Model $entity)
+approve(Product $product)
+publish(Product $product)
+archive(Product $product)
 ```
 
-Use business-action method names when the logic does not fit CRUD.
+Do not create Services only for simple CRUD methods.
 
-```text
-approve(Order $order)
-cancel(Order $order)
-publish(Article $article)
-```
+## UnitOfWorkService
+
+UnitOfWorkService is shared infrastructure and is not named per domain.
+
+Use UnitOfWorkService for simple CRUD persistence.
 
 ## Repositories
 

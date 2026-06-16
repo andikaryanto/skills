@@ -36,90 +36,62 @@ Route::delete('/products/{product}', [ProductController::class, 'destroy'])
 final class ProductController
 {
     public function __construct(
-        private readonly ProductService $service,
+        private readonly ProductQuery $query,
+        private readonly UnitOfWorkService $unitOfWork,
     ) {
     }
 
     public function index(Request $request): PagedJsonResponse
     {
+        $filters = $request->query();
+
+        if (isset($filters['status'])) {
+            $this->query->whereStatus($filters['status']);
+        }
+
         return new PagedJsonResponse(
-            $this->service->getAll($request->query())
+            $this->query->paginate()
         );
     }
 
     public function show(Request $request): SuccessResponse
     {
         return new SuccessResponse(
-            $this->service->get($request->attributes->get('product'))
+            $request->attributes->get('product')
         );
     }
 
     public function store(Request $request): ResourceCreatedResponse
     {
         return new ResourceCreatedResponse(
-            $this->service->create($request->attributes->get('product'))
+            $this->unitOfWork->save($request->attributes->get('product'))
         );
     }
 
     public function update(Request $request): SuccessResponse
     {
         return new SuccessResponse(
-            $this->service->update($request->attributes->get('product'))
+            $this->unitOfWork->save($request->attributes->get('product'))
         );
     }
 
     public function destroy(Request $request): SuccessResponse
     {
+        $product = $request->attributes->get('product');
+        $this->unitOfWork->delete($product);
+
         return new SuccessResponse(
-            $this->service->delete($request->attributes->get('product'))
+            $product
         );
     }
 }
 ```
 
-## Service
+## UnitOfWork Persistence
 
-```php
-final class ProductService
-{
-    public function __construct(
-        private readonly ProductRepository $repository,
-        private readonly ProductQuery $query,
-    ) {
-    }
+Simple CRUD persistence is handled by `UnitOfWorkService`.
 
-    public function getAll(array $filters): LengthAwarePaginator
-    {
-        if (isset($filters['status'])) {
-            $this->query->whereStatus($filters['status']);
-        }
-
-        return $this->query->paginate();
-    }
-
-    public function get(Product $product): Product
-    {
-        return $product;
-    }
-
-    public function create(Product $product): Product
-    {
-        return $this->repository->save($product);
-    }
-
-    public function update(Product $product): Product
-    {
-        return $this->repository->save($product);
-    }
-
-    public function delete(Product $product): Product
-    {
-        $this->repository->delete($product);
-
-        return $product;
-    }
-}
-```
+Do not create a domain Service for simple CRUD. Create a domain Service only when the feature has complex business logic, orchestration, transactions, calculations, or state transitions.
 
 ## Repository
 

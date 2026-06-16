@@ -23,9 +23,10 @@ This documentation defines reusable Laravel architecture and development workflo
 ## Core Principles
 
 - Controllers must stay thin.
-- Business logic belongs in Services.
+- Complex business logic belongs in Services.
 - Repositories are only for simple database access.
 - Query classes are for complex database reads.
+- UnitOfWorkService handles simple CRUD persistence.
 - Request validation and hydration are handled by Middleware.
 - API responses use standard response classes.
 - Tests must cover the main happy paths and failure paths.

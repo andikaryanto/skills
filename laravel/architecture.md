@@ -36,15 +36,19 @@ Dependencies must flow from the HTTP layer toward the domain and persistence lay
 ```text
 Controller -> Service -> Repository
 Controller -> Service -> Query
+Controller -> Query
+Controller -> UnitOfWorkService
 Controller -> ViewModel
 Middleware -> Model / Entity
 ```
 
 Dependency rules:
 
-- Controllers may call Services and ViewModels.
+- Controllers may call Services, Queries, UnitOfWorkService, and ViewModels.
 - Controllers must not access the database directly.
-- Services may call Repositories and Queries.
+- Controllers may use Queries and UnitOfWorkService directly for simple CRUD.
+- Services are used only for complex business logic.
+- Services may call Repositories, Queries, and UnitOfWorkService.
 - Services must not depend on `Request` or HTTP responses.
 - Repositories and Queries must not return HTTP responses.
 - Models must not depend on Controllers, Middleware, Services, Repositories, or Queries.
@@ -58,7 +62,8 @@ Controllers are responsible for HTTP orchestration.
 Controllers may:
 
 - Read validated or hydrated data from the request.
-- Call Services.
+- Call Queries and UnitOfWorkService for simple CRUD.
+- Call Services for complex business logic.
 - Build responses using standard response classes.
 
 Controllers must not:
@@ -90,13 +95,16 @@ Hydrator:
 
 ### Services
 
-Services contain business logic and domain orchestration.
+Services contain complex business logic and domain orchestration.
+
+Services are not used for simple CRUD. Simple CRUD reads are handled by Query classes, and simple CRUD persistence is handled by UnitOfWorkService.
 
 Services may:
 
 - Execute business rules.
 - Call Repositories for simple data operations.
 - Call Queries for complex data reads.
+- Call UnitOfWorkService for persistence.
 - Manage database transactions.
 - Return Models, entities, collections, paginators, or ViewModels.
 
@@ -179,8 +187,8 @@ vendor/andikaryanto/laravelcommon/src/Responses
 
 Response rules:
 
-- `GET` collection uses `LaravelCommon\Responses\PagedJsonResponse` and the Service function `getAll`.
-- `GET` single entity uses `LaravelCommon\Responses\SuccessResponse` and the Service function `get`.
+- `GET` collection uses `LaravelCommon\Responses\PagedJsonResponse`.
+- `GET` single entity uses `LaravelCommon\Responses\SuccessResponse`.
 - `POST` single entity uses `LaravelCommon\Responses\ResourceCreatedResponse`.
 - `PATCH` single entity uses `LaravelCommon\Responses\SuccessResponse`.
 - `DELETE` single entity uses `LaravelCommon\Responses\SuccessResponse`.
@@ -193,7 +201,7 @@ Example for the `Product` domain:
 
 ```text
 ProductController
-ProductService
+ProductApprovalService
 ProductRepository
 ProductQuery
 ProductHydratorMiddleware
@@ -209,6 +217,7 @@ Avoid these patterns:
 - Controller calls Model queries directly.
 - Service accepts a `Request` object.
 - Service returns `JsonResponse` or another HTTP response.
+- Service is created only to wrap simple CRUD persistence.
 - Repository contains complex listing queries.
 - Query class changes data.
 - Request validation is spread across Controllers or Services.
