@@ -1,6 +1,6 @@
 # Laravel Development Workflow
 
-Dokumen ini menjelaskan alur kerja pengembangan fitur Laravel berdasarkan aturan layer di `architecture.md`.
+This document describes the Laravel feature development workflow based on the layer rules in `architecture.md`.
 
 See also:
 
@@ -12,27 +12,27 @@ See also:
 
 ## Goal
 
-- Controller tetap tipis dan hanya mengatur HTTP flow.
-- Business logic ditempatkan di Service.
-- Akses database sederhana ditempatkan di Repository.
-- Query kompleks ditempatkan di Query class.
-- Validasi dan hydrasi request/entity dilakukan melalui Middleware.
-- Semua response menggunakan response class dari `LaravelCommon\Responses`.
+- Controllers stay thin and only manage HTTP flow.
+- Business logic belongs in Services.
+- Simple database access belongs in Repositories.
+- Complex queries belong in Query classes.
+- Request/entity validation and hydration are handled by Middleware.
+- All responses use response classes from `LaravelCommon\Responses`.
 
 ## Feature Workflow
 
 ### 1. Define the Feature Contract
 
-Sebelum menulis implementasi, tentukan kontrak fitur:
+Before writing the implementation, define the feature contract:
 
-- Route dan HTTP method.
-- Request payload, query parameter, dan route parameter.
-- Response success.
-- Response error yang mungkin terjadi.
-- Permission atau authentication requirement.
-- Entity utama yang diproses.
+- Route and HTTP method.
+- Request payload, query parameters, and route parameters.
+- Success response.
+- Possible error responses.
+- Permission or authentication requirement.
+- Main entity being processed.
 
-Contoh kontrak singkat:
+Short contract example:
 
 ```text
 POST /api/products
@@ -42,24 +42,24 @@ Response: ResourceCreatedResponse
 
 ### 2. Add or Update Route
 
-Tambahkan route di file route yang sesuai.
+Add the route in the appropriate route file.
 
-Gunakan middleware validator dan hydrator sesuai kebutuhan:
+Use validator and hydrator middleware as needed:
 
 ```php
 Route::post('/products', [ProductController::class, 'store'])
     ->middleware([
-        ProductRequestValidatorMiddleware::class,
+        ProductRequestValidatorMiddleware::class . ':post',
         ProductHydratorMiddleware::class,
     ]);
 ```
 
-Route parameter yang perlu diubah menjadi entity juga harus melalui hydrator:
+Route parameters that need to be resolved into entities must also go through the hydrator:
 
 ```php
 Route::patch('/products/{product}', [ProductController::class, 'update'])
     ->middleware([
-        ProductRequestValidatorMiddleware::class,
+        ProductRequestValidatorMiddleware::class . ':patch',
         ProductHydratorMiddleware::class,
     ]);
 ```
@@ -68,39 +68,41 @@ Route::patch('/products/{product}', [ProductController::class, 'update'])
 
 #### Validator Middleware
 
-Gunakan `Http/Middlewares/{Domain}RequestValidatorMiddleware` dan extend `ValidatorMiddleware`.
+Use `Http/Middleware/RequestValidator/{Domain}RequestValidatorMiddleware` and extend `RequestValidatorMiddleware`.
 
-Validator bertanggung jawab untuk:
+The validator is responsible for:
 
-- Validasi body request.
-- Validasi query parameter.
-- Menolak request sebelum masuk controller ketika data tidak valid.
+- Validating the request body.
+- Validating query parameters.
+- Rejecting invalid requests before they reach the controller.
+- Defining validation rules in methods named after actions, such as `post()` and `patch()`.
+- Being called from routes with the method name as the middleware parameter.
 
 #### Hydrator Middleware
 
-Gunakan `Http/Middlewares/{Domain}HydratorMiddleware` dan extend `HydratorMiddleware`.
+Use `Http/Middlewares/{Domain}HydratorMiddleware` and extend `HydratorMiddleware`.
 
-Hydrator bertanggung jawab untuk:
+The hydrator is responsible for:
 
-- Mengisi model dari request body.
-- Mengambil entity dari route parameter ketika route memiliki `{domain}`.
-- Menyimpan hasil hydrasi ke request attribute.
+- Filling the model from the request body.
+- Resolving the entity from route parameters when the route has `{domain}`.
+- Storing the hydrated result in request attributes.
 
 ### 4. Implement Controller
 
-Controller hanya boleh:
+Controllers may only:
 
-- Mengambil input yang sudah divalidasi atau dihidrasi dari request.
-- Memanggil Service.
-- Mengembalikan response class yang sesuai.
+- Read validated or hydrated input from the request.
+- Call Services.
+- Return the appropriate response class.
 
 Response rule:
 
-- `GET` collection: gunakan `LaravelCommon\Responses\PagedJsonResponse` dan Service function `getAll`.
-- `GET`, `PATCH`, `DELETE` single entity: gunakan `LaravelCommon\Responses\SuccessResponse` dan Service function `get`.
-- `POST` single entity: gunakan `LaravelCommon\Responses\ResourceCreatedResponse`.
+- `GET` collection: use `LaravelCommon\Responses\PagedJsonResponse` and the Service function `getAll`.
+- `GET`, `PATCH`, `DELETE` single entity: use `LaravelCommon\Responses\SuccessResponse` and the Service function `get`.
+- `POST` single entity: use `LaravelCommon\Responses\ResourceCreatedResponse`.
 
-Contoh struktur controller:
+Controller structure example:
 
 ```php
 final class ProductController
@@ -128,23 +130,23 @@ final class ProductController
 
 ### 5. Implement Service
 
-Service berisi business logic dan orchestration.
+Services contain business logic and orchestration.
 
-Service boleh:
+Services may:
 
-- Memanggil Repository.
-- Memanggil Query class.
-- Melakukan transaksi database.
-- Mengatur business rule.
-- Mengubah entity menjadi ViewModel bila dibutuhkan.
+- Call Repositories.
+- Call Query classes.
+- Run database transactions.
+- Enforce business rules.
+- Transform entities into ViewModels when needed.
 
-Service tidak boleh:
+Services must not:
 
-- Membaca raw request HTTP secara langsung.
-- Mengembalikan response HTTP.
-- Menyimpan validasi request yang seharusnya ada di Middleware.
+- Read raw HTTP requests directly.
+- Return HTTP responses.
+- Contain request validation that belongs in Middleware.
 
-Contoh:
+Example:
 
 ```php
 final class ProductService
@@ -169,81 +171,81 @@ final class ProductService
 
 ### 6. Implement Repository
 
-Repository digunakan untuk operasi database sederhana:
+Repositories are used for simple database operations:
 
 - `find`
 - `save`
 - `update`
 - `delete`
-- lookup sederhana berdasarkan field unik
+- simple lookup by unique field
 
-Repository tidak digunakan untuk query kompleks dengan banyak filter, join, aggregation, atau pagination khusus. Gunakan Query class untuk kebutuhan tersebut.
+Repositories are not used for complex queries with many filters, joins, aggregations, or custom pagination. Use Query classes for those cases.
 
 ### 7. Implement Query Class
 
-Query class digunakan untuk akses database kompleks:
+Query classes are used for complex database access:
 
-- Listing dengan filter dan pagination.
-- Join antar tabel.
+- Listing with filters and pagination.
+- Joins across tables.
 - Search.
 - Sorting.
 - Aggregation.
 - Report query.
 
-Query class harus mengembalikan data yang siap dipakai Service, bukan response HTTP.
+Query classes must return data ready for Services to use, not HTTP responses.
 
 ### 8. Implement ViewModel When Needed
 
-Gunakan `ViewModels` ketika response membutuhkan bentuk data yang berbeda dari Model.
+Use `ViewModels` when the response needs a shape that differs from the Model.
 
-ViewModel cocok untuk:
+ViewModels are suitable for:
 
-- Menyembunyikan field internal.
-- Menggabungkan beberapa field.
-- Menormalisasi format response.
-- Menyiapkan data untuk API consumer.
+- Hiding internal fields.
+- Combining multiple fields.
+- Normalizing response formats.
+- Preparing data for API consumers.
 
 ### 9. Testing Workflow
 
-Minimal test untuk fitur baru:
+Minimum tests for a new feature:
 
-- Feature test untuk happy path endpoint.
-- Feature test untuk validation error.
-- Feature test untuk not found atau unauthorized bila relevan.
-- Unit test Service bila business rule cukup kompleks.
-- Test Query class bila filter, sorting, atau pagination kompleks.
+- Feature test for the endpoint happy path.
+- Feature test for validation errors.
+- Feature test for not found or unauthorized cases when relevant.
+- Unit test for Services when business rules are complex enough.
+- Query class test when filters, sorting, or pagination are complex.
 
 Checklist test per method:
 
-- `GET collection`: data ter-paginate, filter bekerja, response shape benar.
-- `GET single`: entity ditemukan, not found ditangani.
-- `POST`: validasi berjalan, entity dibuat, response menggunakan created response.
-- `PATCH`: validasi berjalan, entity berubah, response success.
-- `DELETE`: entity dihapus atau ditandai deleted, response success.
+- `GET collection`: data is paginated, filters work, response shape is correct.
+- `GET single`: entity is found, not found is handled.
+- `POST`: validation runs, entity is created, response uses created response.
+- `PATCH`: validation runs, entity is updated, response is successful.
+- `DELETE`: entity is deleted or marked as deleted, response is successful.
 
 ### 10. Review Checklist
 
-Sebelum merge, pastikan:
+Before merging, ensure:
 
-- Controller tidak berisi business logic.
-- Service tidak membaca `Request` langsung.
-- Repository hanya berisi akses database sederhana.
-- Query kompleks tidak ditempatkan di Repository.
-- Middleware validator dan hydrator digunakan untuk request/route entity.
-- Response class mengikuti aturan method.
-- Naming class konsisten dengan domain.
-- Error handling eksplisit untuk kondisi penting.
-- Test mencakup happy path dan failure path utama.
+- Controllers do not contain business logic.
+- Services do not read `Request` directly.
+- Repositories only contain simple database access.
+- Complex queries are not placed in Repositories.
+- Validator and hydrator middleware are used for request/route entities.
+- Response classes follow method rules.
+- Class naming is consistent with the domain.
+- Error handling is explicit for important cases.
+- Tests cover the main happy paths and failure paths.
 
 ## Recommended Implementation Order
 
 1. Route
 2. Validator Middleware
 3. Hydrator Middleware
-4. Repository atau Query
+4. Repository or Query
 5. Service
 6. Controller
 7. ViewModel
 8. Tests
 
-Urutan ini membantu kontrak HTTP jelas dari awal, lalu implementasi bergerak dari input, domain logic, sampai response.
+This order keeps the HTTP contract clear from the start, then moves implementation from input, to domain logic, to response.

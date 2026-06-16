@@ -1,12 +1,12 @@
 # Laravel Naming Conventions
 
-Dokumen ini mendefinisikan standar penamaan class, method, route, dan request attribute.
+This document defines naming standards for classes, methods, routes, and request attributes.
 
 ## Domain Prefix
 
-Gunakan nama domain sebagai prefix class.
+Use the domain name as the class prefix.
 
-Contoh domain `Product`:
+Example for the `Product` domain:
 
 ```text
 ProductController
@@ -20,7 +20,7 @@ ProductViewModel
 
 ## Controllers
 
-Controller menggunakan nama singular domain.
+Controllers use the singular domain name.
 
 ```text
 ProductController
@@ -28,7 +28,7 @@ CustomerController
 OrderController
 ```
 
-Method controller mengikuti aksi HTTP:
+Controller methods follow HTTP actions:
 
 ```text
 index   -> GET collection
@@ -40,13 +40,13 @@ destroy -> DELETE
 
 ## Services
 
-Service menggunakan nama singular domain.
+Services use the singular domain name.
 
 ```text
 ProductService
 ```
 
-Method service standar:
+Standard Service methods:
 
 ```text
 getAll(array $filters)
@@ -56,7 +56,7 @@ update(Entity|Model $entity)
 delete(Entity|Model $entity)
 ```
 
-Gunakan nama method berbasis business action ketika logic tidak cocok dengan CRUD.
+Use business-action method names when the logic does not fit CRUD.
 
 ```text
 approve(Order $order)
@@ -66,13 +66,13 @@ publish(Article $article)
 
 ## Repositories
 
-Repository digunakan untuk operasi data sederhana.
+Repositories are used for simple data operations.
 
 ```text
 ProductRepository
 ```
 
-Method repository standar:
+Standard Repository methods:
 
 ```text
 find(int|string $id)
@@ -84,13 +84,13 @@ findBySku(string $sku)
 
 ## Queries
 
-Query class digunakan untuk pembacaan data kompleks.
+Query classes are used for complex data reads.
 
 ```text
 ProductQuery
 ```
 
-Method query yang umum:
+Common Query methods:
 
 ```text
 paginate(array $filters)
@@ -113,11 +113,18 @@ Hydrator middleware:
 ProductHydratorMiddleware
 ```
 
-Hydrator middleware menggunakan constructor repository dan nama domain.
+Hydrator middleware uses a repository constructor and the domain name.
+
+Validator middleware exposes action methods used as middleware parameters:
+
+```text
+ProductRequestValidatorMiddleware::class . ':post'
+ProductRequestValidatorMiddleware::class . ':patch'
+```
 
 ## Request Attributes
 
-Entity hasil hydrasi disimpan dengan nama singular domain dalam format camel case.
+Hydrated entities are stored using the singular domain name in camel case.
 
 ```text
 product
@@ -125,7 +132,7 @@ customer
 order
 ```
 
-Jika ada lebih dari satu entity dalam request yang sama, gunakan nama yang eksplisit.
+If more than one entity exists in the same request, use explicit names.
 
 ```text
 sourceAccount
@@ -134,7 +141,7 @@ targetAccount
 
 ## Routes
 
-Gunakan plural kebab-case untuk resource route.
+Use plural kebab-case for resource routes.
 
 ```text
 /products
@@ -142,7 +149,7 @@ Gunakan plural kebab-case untuk resource route.
 /purchase-orders
 ```
 
-Gunakan nama action hanya untuk operasi non-CRUD.
+Use action names only for non-CRUD operations.
 
 ```text
 POST /orders/{order}/approve

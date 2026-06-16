@@ -1,22 +1,22 @@
 # Laravel API Response Standard
 
-Dokumen ini mendefinisikan standar response API.
+This document defines API response standards.
 
 ## Response Package
 
-Semua response API standar harus menggunakan class dari:
+All standard API responses must use classes from:
 
 ```text
 vendor/andikaryanto/laravelcommon/src/Responses
 ```
 
-Jangan membuat response manual dengan `response()->json()` untuk endpoint API standar kecuali ada kebutuhan khusus yang disetujui.
+Do not create manual responses with `response()->json()` for standard API endpoints unless there is an approved special case.
 
 ## Response Mapping
 
 | Method | Use Case | Response Class |
 | --- | --- | --- |
-| `GET` | Collection atau paginated list | `LaravelCommon\Responses\PagedJsonResponse` |
+| `GET` | Collection or paginated list | `LaravelCommon\Responses\PagedJsonResponse` |
 | `GET` | Single entity | `LaravelCommon\Responses\SuccessResponse` |
 | `POST` | Created resource | `LaravelCommon\Responses\ResourceCreatedResponse` |
 | `PATCH` | Updated resource | `LaravelCommon\Responses\SuccessResponse` |
@@ -24,7 +24,7 @@ Jangan membuat response manual dengan `response()->json()` untuk endpoint API st
 
 ## Controller Rules
 
-Controller hanya memilih response class dan mengirim data dari Service.
+Controllers only select the response class and pass data from Services.
 
 ```php
 public function show(Request $request): SuccessResponse
@@ -35,17 +35,17 @@ public function show(Request $request): SuccessResponse
 }
 ```
 
-Controller tidak boleh:
+Controllers must not:
 
-- Membentuk struktur JSON manual.
-- Mengubah data kompleks untuk response.
-- Menentukan business status berdasarkan query langsung.
+- Manually build JSON structures.
+- Perform complex data transformation for responses.
+- Determine business status from direct queries.
 
-Gunakan ViewModel jika response shape tidak sama dengan Model.
+Use ViewModels when the response shape differs from the Model.
 
 ## Pagination
 
-Collection endpoint harus menggunakan response pagination standar.
+Collection endpoints must use the standard pagination response.
 
 ```php
 public function index(Request $request): PagedJsonResponse
@@ -56,16 +56,16 @@ public function index(Request $request): PagedJsonResponse
 }
 ```
 
-Filtering, sorting, dan pagination diproses oleh Service dan Query class.
+Filtering, sorting, and pagination are processed by Services and Query classes.
 
 ## Error Response
 
-Validation error harus ditangani oleh `ValidatorMiddleware`.
+Validation errors must be handled by `RequestValidatorMiddleware`.
 
-Not found dan business error harus eksplisit di layer yang paling tepat:
+Not found and business errors must be explicit in the most appropriate layer:
 
-- Route entity tidak ditemukan: Hydrator atau Repository.
-- Business rule gagal: Service.
-- Query result kosong untuk resource wajib: Query atau Service.
+- Route entity not found: Hydrator or Repository.
+- Business rule failure: Service.
+- Empty query result for a required resource: Query or Service.
 
-Endpoint tidak boleh menyembunyikan error penting dengan response success kosong.
+Endpoints must not hide important errors behind empty success responses.

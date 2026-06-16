@@ -1,15 +1,15 @@
 # Laravel Workflow
 
-Dokumentasi ini berisi standar arsitektur dan workflow pengembangan Laravel yang bisa dipakai ulang di project Laravel lain.
+This documentation defines reusable Laravel architecture and development workflow standards.
 
 ## Documents
 
-- [Architecture](architecture.md): struktur layer, dependency direction, tanggung jawab class, dan anti-pattern.
-- [Development Workflow](development-workflow.md): urutan kerja implementasi fitur dari route sampai test.
-- [Naming](naming.md): konvensi nama class, method, route, dan request attribute.
-- [API Response](api-response.md): standar response API dan penggunaan `LaravelCommon\Responses`.
-- [Testing](testing.md): standar test untuk endpoint, service, repository, dan query.
-- [CRUD Example](examples/crud.md): contoh implementasi CRUD domain sederhana.
+- [Architecture](architecture.md): layer structure, dependency direction, class responsibilities, and anti-patterns.
+- [Development Workflow](development-workflow.md): feature implementation flow from route to tests.
+- [Naming](naming.md): naming conventions for classes, methods, routes, and request attributes.
+- [API Response](api-response.md): API response standards and `LaravelCommon\Responses` usage.
+- [Testing](testing.md): testing standards for endpoints, services, repositories, and queries.
+- [CRUD Example](examples/crud.md): example implementation for a simple CRUD domain.
 
 ## Recommended Reading Order
 
@@ -22,10 +22,10 @@ Dokumentasi ini berisi standar arsitektur dan workflow pengembangan Laravel yang
 
 ## Core Principles
 
-- Controller harus tipis.
-- Business logic berada di Service.
-- Repository hanya untuk akses database sederhana.
-- Query class untuk pembacaan database kompleks.
-- Request validation dan hydration dilakukan lewat Middleware.
-- API response menggunakan response class standar.
-- Test harus mencakup happy path dan failure path utama.
+- Controllers must stay thin.
+- Business logic belongs in Services.
+- Repositories are only for simple database access.
+- Query classes are for complex database reads.
+- Request validation and hydration are handled by Middleware.
+- API responses use standard response classes.
+- Tests must cover the main happy paths and failure paths.

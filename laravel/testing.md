@@ -1,66 +1,66 @@
 # Laravel Testing Standard
 
-Dokumen ini mendefinisikan standar testing untuk fitur Laravel.
+This document defines testing standards for Laravel features.
 
 ## Minimum Coverage
 
-Fitur baru minimal memiliki:
+New features must have at least:
 
-- Feature test untuk happy path.
-- Feature test untuk validation error.
-- Feature test untuk not found, unauthorized, atau forbidden bila relevan.
-- Unit test Service jika business rule cukup kompleks.
-- Test Query jika filter, sorting, pagination, join, atau aggregation cukup kompleks.
+- Feature test for the happy path.
+- Feature test for validation errors.
+- Feature test for not found, unauthorized, or forbidden cases when relevant.
+- Unit test for Services when business rules are complex enough.
+- Query test when filters, sorting, pagination, joins, or aggregations are complex enough.
 
 ## Feature Tests
 
-Feature test berfokus pada behavior endpoint dari sudut pandang API consumer.
+Feature tests focus on endpoint behavior from the API consumer's perspective.
 
-Test yang perlu ada per method:
+Tests to cover per method:
 
-- `GET collection`: response sukses, pagination benar, filter bekerja.
-- `GET single`: entity ditemukan dan response shape benar.
-- `POST`: validasi berjalan, data tersimpan, response created.
-- `PATCH`: data berubah, response success.
-- `DELETE`: data terhapus atau status berubah, response success.
+- `GET collection`: successful response, correct pagination, filters work.
+- `GET single`: entity is found and response shape is correct.
+- `POST`: validation runs, data is stored, response is created.
+- `PATCH`: data is changed, response is successful.
+- `DELETE`: data is deleted or status is changed, response is successful.
 
 ## Validation Tests
 
-Untuk setiap request validator, test minimal:
+For each request validator, test at least:
 
 - Required field.
 - Invalid type.
 - Invalid enum value.
-- Invalid relation id bila ada.
-- Boundary value seperti minimum, maximum, length, atau date range.
+- Invalid relation id when present.
+- Boundary values such as minimum, maximum, length, or date range.
 
 ## Service Tests
 
-Service test digunakan ketika ada business logic yang tidak cukup aman hanya diuji lewat endpoint.
+Service tests are used when business logic is not safe enough to test only through endpoints.
 
-Contoh logic yang perlu unit test:
+Examples of logic that needs unit tests:
 
 - State transition.
-- Permission domain.
+- Domain permissions.
 - Calculation.
 - Transaction behavior.
-- Rule yang melibatkan lebih dari satu entity.
+- Rules involving more than one entity.
 
 ## Query Tests
 
-Query test digunakan untuk memastikan pembacaan data kompleks benar.
+Query tests are used to ensure complex data reads are correct.
 
-Test minimal:
+Minimum tests:
 
-- Filter utama.
+- Main filters.
 - Sorting.
 - Pagination.
-- Join atau relation loading.
-- Aggregation bila ada.
+- Join or relation loading.
+- Aggregation when present.
 
 ## Test Naming
 
-Gunakan nama test yang menjelaskan behavior.
+Use test names that describe behavior.
 
 ```php
 public function test_it_creates_product(): void
@@ -70,6 +70,6 @@ public function test_it_filters_products_by_status(): void
 
 ## Factories
 
-Gunakan factory untuk setup data.
+Use factories for test data setup.
 
-Hindari membuat fixture besar yang sulit dibaca. Setup data harus cukup kecil untuk menjelaskan skenario test.
+Avoid large fixtures that are hard to read. Test setup should be small enough to explain the scenario.

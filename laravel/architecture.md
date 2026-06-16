@@ -10,8 +10,8 @@ See also:
 
 ## Purpose
 
-Dokumen ini mendefinisikan struktur dan batas tanggung jawab layer aplikasi Laravel.
-Untuk urutan implementasi fitur, gunakan `development-workflow.md`.
+This document defines the structure and responsibility boundaries for Laravel application layers.
+For the feature implementation flow, use `development-workflow.md`.
 
 ## Application Structure
 
@@ -31,7 +31,7 @@ app
 
 ## Dependency Direction
 
-Dependency harus mengalir dari layer HTTP menuju domain dan persistence.
+Dependencies must flow from the HTTP layer toward the domain and persistence layers.
 
 ```text
 Controller -> Service -> Repository
@@ -40,91 +40,93 @@ Controller -> ViewModel
 Middleware -> Model / Entity
 ```
 
-Aturan dependency:
+Dependency rules:
 
-- Controller boleh memanggil Service dan ViewModel.
-- Controller tidak boleh mengakses database langsung.
-- Service boleh memanggil Repository dan Query.
-- Service tidak boleh bergantung pada `Request` atau response HTTP.
-- Repository dan Query tidak boleh mengembalikan response HTTP.
-- Model tidak boleh bergantung pada Controller, Middleware, Service, Repository, atau Query.
+- Controllers may call Services and ViewModels.
+- Controllers must not access the database directly.
+- Services may call Repositories and Queries.
+- Services must not depend on `Request` or HTTP responses.
+- Repositories and Queries must not return HTTP responses.
+- Models must not depend on Controllers, Middleware, Services, Repositories, or Queries.
 
 ## Layer Responsibilities
 
 ### Controllers
 
-Controller bertanggung jawab untuk HTTP orchestration.
+Controllers are responsible for HTTP orchestration.
 
-Controller boleh:
+Controllers may:
 
-- Mengambil data yang sudah divalidasi atau dihidrasi dari request.
-- Memanggil Service.
-- Membentuk response menggunakan response class standar.
+- Read validated or hydrated data from the request.
+- Call Services.
+- Build responses using standard response classes.
 
-Controller tidak boleh:
+Controllers must not:
 
-- Menyimpan business logic.
-- Melakukan query database langsung.
-- Melakukan validasi manual yang seharusnya ada di Middleware.
-- Mengubah request body menjadi entity secara manual.
+- Contain business logic.
+- Run database queries directly.
+- Perform manual validation that belongs in Middleware.
+- Manually transform request bodies into entities.
 
 ### Middlewares
 
-Middleware digunakan untuk validasi dan hydrasi sebelum request masuk ke Controller.
+Middleware is used for validation and hydration before the request reaches the Controller.
 
 Validator:
 
-- Berada di `Http/Middlewares/{Domain}RequestValidatorMiddleware`.
-- Extend `ValidatorMiddleware`.
-- Bertanggung jawab untuk validasi body, query parameter, dan input request lain.
+- Located at `Http/Middleware/RequestValidator/{Domain}RequestValidatorMiddleware`.
+- Extend `RequestValidatorMiddleware`.
+- Responsible for validating body payloads, query parameters, and other request input.
+- Exposes validation methods by action name, such as `post()` and `patch()`.
+- Used in routes with middleware parameters, such as `{Domain}RequestValidatorMiddleware::class . ':post'`.
 
 Hydrator:
 
-- Berada di `Http/Middlewares/{Domain}HydratorMiddleware`.
+- Located at `Http/Middlewares/{Domain}HydratorMiddleware`.
 - Extend `HydratorMiddleware`.
-- Constructor memanggil `parent::__construct('{domain}', $repository)`.
-- Bertanggung jawab untuk mengisi model dari body request.
-- Bertanggung jawab untuk mengambil entity dari route parameter ketika diperlukan.
+- The constructor calls `parent::__construct('{domain}', $repository)`.
+- Responsible for filling the model from the request body.
+- Responsible for resolving the entity from route parameters when needed.
 
 ### Services
 
-Service adalah tempat business logic dan orchestration domain.
+Services contain business logic and domain orchestration.
 
-Service boleh:
+Services may:
 
-- Menjalankan business rule.
-- Memanggil Repository untuk operasi data sederhana.
-- Memanggil Query untuk pembacaan data kompleks.
-- Mengatur transaksi database.
-- Menghasilkan Model, entity, collection, paginator, atau ViewModel.
+- Execute business rules.
+- Call Repositories for simple data operations.
+- Call Queries for complex data reads.
+- Manage database transactions.
+- Return Models, entities, collections, paginators, or ViewModels.
 
-Service tidak boleh:
+Services must not:
 
-- Membaca `Request` secara langsung.
-- Mengembalikan response HTTP.
-- Menyimpan validasi request.
+- Read `Request` directly.
+- Return HTTP responses.
+- Contain request validation.
 
 ### Repositories
 
-Repository digunakan untuk operasi database sederhana terhadap satu model atau aggregate.
+Repositories are used for simple database operations against one model or aggregate.
 
-Contoh tanggung jawab Repository:
+Example Repository responsibilities:
 
 - `find`
 - `save`
 - `update`
 - `delete`
-- lookup sederhana berdasarkan field unik
+- simple lookup by unique field
 
-Repository tidak digunakan untuk listing kompleks, filter dinamis, join, aggregation, atau report query.
+Repositories are not used for complex listings, dynamic filters, joins, aggregations, or report queries.
 
 ### Queries
 
-Query class digunakan untuk pembacaan data kompleks.
+Query classes are used for complex data reads.
 
-Contoh tanggung jawab Query:
+Example Query responsibilities:
 
-- Listing dengan filter.
+- Listing with filters.
 - Pagination.
 - Sorting.
 - Search.
@@ -132,53 +134,53 @@ Contoh tanggung jawab Query:
 - Aggregation.
 - Report query.
 
-Query class harus mengembalikan data yang siap diproses Service, bukan response HTTP.
+Query classes must return data that is ready for Services to process, not HTTP responses.
 
 ### Models
 
-Model merepresentasikan data dan relasi database.
+Models represent database data and relationships.
 
-Model boleh berisi:
+Models may contain:
 
-- Relationship.
-- Cast.
-- Scope sederhana.
-- Accessor atau mutator yang benar-benar melekat pada data.
+- Relationships.
+- Casts.
+- Simple scopes.
+- Accessors or mutators that are truly part of the data model.
 
-Model tidak boleh berisi orchestration business process yang kompleks.
+Models must not contain complex business process orchestration.
 
 ### ViewModels
 
-ViewModel digunakan ketika bentuk response berbeda dari struktur Model.
+ViewModels are used when the response shape differs from the Model structure.
 
-ViewModel cocok untuk:
+ViewModels are suitable for:
 
-- Menyembunyikan field internal.
-- Menggabungkan beberapa field untuk API response.
-- Menormalisasi format output.
-- Menyiapkan response shape yang stabil untuk client.
+- Hiding internal fields.
+- Combining multiple fields for API responses.
+- Normalizing output formats.
+- Preparing stable response shapes for clients.
 
 ## Response Rules
 
-Semua response API harus menggunakan class dari:
+All API responses must use classes from:
 
 ```text
 vendor/andikaryanto/laravelcommon/src/Responses
 ```
 
-Aturan response:
+Response rules:
 
-- `GET` collection menggunakan `LaravelCommon\Responses\PagedJsonResponse` dan Service function `getAll`.
-- `GET` single entity menggunakan `LaravelCommon\Responses\SuccessResponse` dan Service function `get`.
-- `POST` single entity menggunakan `LaravelCommon\Responses\ResourceCreatedResponse`.
-- `PATCH` single entity menggunakan `LaravelCommon\Responses\SuccessResponse`.
-- `DELETE` single entity menggunakan `LaravelCommon\Responses\SuccessResponse`.
+- `GET` collection uses `LaravelCommon\Responses\PagedJsonResponse` and the Service function `getAll`.
+- `GET` single entity uses `LaravelCommon\Responses\SuccessResponse` and the Service function `get`.
+- `POST` single entity uses `LaravelCommon\Responses\ResourceCreatedResponse`.
+- `PATCH` single entity uses `LaravelCommon\Responses\SuccessResponse`.
+- `DELETE` single entity uses `LaravelCommon\Responses\SuccessResponse`.
 
 ## Naming Conventions
 
-Gunakan nama domain sebagai prefix class.
+Use the domain name as the class prefix.
 
-Contoh untuk domain `Product`:
+Example for the `Product` domain:
 
 ```text
 ProductController
@@ -192,13 +194,13 @@ ProductViewModel
 
 ## Anti-Patterns
 
-Hindari pola berikut:
+Avoid these patterns:
 
-- Controller berisi business logic.
-- Controller memanggil Model query langsung.
-- Service menerima object `Request`.
-- Service mengembalikan `JsonResponse` atau response HTTP lain.
-- Repository berisi query listing kompleks.
-- Query class melakukan perubahan data.
-- Validasi request tersebar di Controller atau Service.
-- Response dibuat manual dengan `response()->json()` untuk endpoint API standar.
+- Controller contains business logic.
+- Controller calls Model queries directly.
+- Service accepts a `Request` object.
+- Service returns `JsonResponse` or another HTTP response.
+- Repository contains complex listing queries.
+- Query class changes data.
+- Request validation is spread across Controllers or Services.
+- Responses are manually created with `response()->json()` for standard API endpoints.

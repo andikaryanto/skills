@@ -1,6 +1,6 @@
 # CRUD Example
 
-Contoh ini menggunakan domain `Product` untuk menunjukkan pola implementasi CRUD.
+This example uses the `Product` domain to demonstrate the CRUD implementation pattern.
 
 ## Route
 
@@ -9,7 +9,7 @@ Route::get('/products', [ProductController::class, 'index']);
 
 Route::post('/products', [ProductController::class, 'store'])
     ->middleware([
-        ProductRequestValidatorMiddleware::class,
+        ProductRequestValidatorMiddleware::class . ':post',
         ProductHydratorMiddleware::class,
     ]);
 
@@ -20,7 +20,7 @@ Route::get('/products/{product}', [ProductController::class, 'show'])
 
 Route::patch('/products/{product}', [ProductController::class, 'update'])
     ->middleware([
-        ProductRequestValidatorMiddleware::class,
+        ProductRequestValidatorMiddleware::class . ':patch',
         ProductHydratorMiddleware::class,
     ]);
 
@@ -164,15 +164,25 @@ final class ProductQuery
 ## Validator Middleware
 
 ```php
-final class ProductRequestValidatorMiddleware extends ValidatorMiddleware
+final class ProductRequestValidatorMiddleware extends RequestValidatorMiddleware
 {
-    protected function rules(): array
+    public function post()
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'sku' => ['required', 'string', 'max:100'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'status' => ['required', 'string'],
+            'name' => 'required|string|max:255',
+            'sku' => 'required|string|max:100',
+            'price' => 'required|numeric|min:0',
+            'status' => 'required|string',
+        ];
+    }
+
+    public function patch()
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'sku' => 'required|string|max:100',
+            'price' => 'required|numeric|min:0',
+            'status' => 'required|string',
         ];
     }
 }
@@ -209,7 +219,7 @@ final class ProductHydratorMiddleware extends HydratorMiddleware
 
 ## Tests
 
-Minimal test:
+Minimum tests:
 
 - `test_it_lists_products`
 - `test_it_creates_product`
