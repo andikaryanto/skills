@@ -66,20 +66,19 @@ publish(Article $article)
 
 ## Repositories
 
-Repositories are used for simple data operations.
+Repositories are thin wrappers around `LaravelCommon\App\Repositories\Repository`.
 
 ```text
 ProductRepository
 ```
 
-Standard Repository methods:
+Standard Repository constructor:
 
-```text
-find(int|string $id)
-findOrFail(int|string $id)
-save(Model $model)
-delete(Model $model)
-findBySku(string $sku)
+```php
+public function __construct()
+{
+    parent::__construct(Product::class);
+}
 ```
 
 ## Queries

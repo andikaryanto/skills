@@ -124,23 +124,11 @@ final class ProductService
 ## Repository
 
 ```php
-final class ProductRepository
+final class ProductRepository extends Repository
 {
-    public function findOrFail(int|string $id): Product
+    public function __construct()
     {
-        return Product::query()->findOrFail($id);
-    }
-
-    public function save(Product $product): Product
-    {
-        $product->save();
-
-        return $product;
-    }
-
-    public function delete(Product $product): void
-    {
-        $product->delete();
+        parent::__construct(Product::class);
     }
 }
 ```

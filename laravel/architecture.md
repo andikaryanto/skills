@@ -108,15 +108,21 @@ Services must not:
 
 ### Repositories
 
-Repositories are used for simple database operations against one model or aggregate.
+Repositories are used for simple database operations against one model or aggregate and must extend `LaravelCommon\App\Repositories\Repository`.
 
-Example Repository responsibilities:
+Each Repository passes its model class to the parent constructor.
 
-- `find`
-- `save`
-- `update`
-- `delete`
-- simple lookup by unique field
+Example:
+
+```php
+final class ProductRepository extends Repository
+{
+    public function __construct()
+    {
+        parent::__construct(Product::class);
+    }
+}
+```
 
 Repositories are not used for complex listings, dynamic filters, joins, aggregations, or report queries.
 

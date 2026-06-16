@@ -175,13 +175,19 @@ final class ProductService
 
 ### 6. Implement Repository
 
-Repositories are used for simple database operations:
+Repositories are thin wrappers around `LaravelCommon\App\Repositories\Repository`.
 
-- `find`
-- `save`
-- `update`
-- `delete`
-- simple lookup by unique field
+Each Repository passes its model class to the parent constructor:
+
+```php
+final class ProductRepository extends Repository
+{
+    public function __construct()
+    {
+        parent::__construct(Product::class);
+    }
+}
+```
 
 Repositories are not used for complex queries with many filters, joins, aggregations, or custom pagination. Use Query classes for those cases.
 
