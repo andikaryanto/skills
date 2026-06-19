@@ -1,19 +1,19 @@
 # Laravel Development Workflow
 
 This document describes the end-to-end Laravel feature development workflow.
-Layer-specific implementation details live in `layers/`.
+Layer-specific implementation details live in `../knowledge/`.
 
 See also:
 
 - [Architecture](architecture.md)
-- [Controller Layer](layers/controller.md)
-- [Middleware Layer](layers/middleware.md)
-- [Model Layer](layers/model.md)
-- [Repository Layer](layers/repository.md)
-- [Query Layer](layers/query.md)
-- [Service Layer](layers/service.md)
-- [UnitOfWork Persistence](layers/unit-of-work.md)
-- [ViewModel Layer](layers/view-model.md)
+- [Controller Layer](../knowledge/controller.md)
+- [Middleware Layer](../knowledge/middleware.md)
+- [Model Layer](../knowledge/model.md)
+- [Repository Layer](../knowledge/repository.md)
+- [Query Layer](../knowledge/query.md)
+- [Service Layer](../knowledge/service.md)
+- [UnitOfWork Persistence](../knowledge/unit-of-work.md)
+- [ViewModel Layer](../knowledge/view-model.md)
 - [Naming Conventions](naming.md)
 - [API Response Standard](api-response.md)
 - [Testing Standard](testing.md)
@@ -56,7 +56,7 @@ Response: ResourceCreatedResponse
 Add the route in the appropriate route file.
 
 Use validator and hydrator middleware as needed.
-See [Middleware Layer](layers/middleware.md).
+See [Middleware Layer](../knowledge/middleware.md).
 
 ### 3. Add Validator Middleware
 
@@ -68,13 +68,13 @@ Route usage example:
 ProductRequestValidatorMiddleware::class . ':post'
 ```
 
-See [Middleware Layer](layers/middleware.md).
+See [Middleware Layer](../knowledge/middleware.md).
 
 ### 4. Add Hydrator Middleware
 
 Hydrate request body and route parameters into the request attributes.
 
-See [Middleware Layer](layers/middleware.md).
+See [Middleware Layer](../knowledge/middleware.md).
 
 ### 5. Add Repository or Query
 
@@ -83,14 +83,14 @@ Use a Query class for complex reads, filters, and pagination.
 
 See:
 
-- [Repository Layer](layers/repository.md)
-- [Query Layer](layers/query.md)
+- [Repository Layer](../knowledge/repository.md)
+- [Query Layer](../knowledge/query.md)
 
 ### 6. Add Model Getters and Setters
 
 Expose explicit getter and setter methods for fields used by hydrators, queries, services, or tests.
 
-See [Model Layer](layers/model.md).
+See [Model Layer](../knowledge/model.md).
 
 ### 7. Implement Controller
 
@@ -107,9 +107,9 @@ For complex business logic:
 
 See:
 
-- [Controller Layer](layers/controller.md)
-- [UnitOfWork Persistence](layers/unit-of-work.md)
-- [Service Layer](layers/service.md)
+- [Controller Layer](../knowledge/controller.md)
+- [UnitOfWork Persistence](../knowledge/unit-of-work.md)
+- [Service Layer](../knowledge/service.md)
 
 ### 8. Add Service Only for Complex Logic
 
@@ -117,13 +117,13 @@ Do not create a domain Service only to wrap simple CRUD.
 
 Create a Service when the feature has business rules, orchestration, transactions, calculations, or state transitions.
 
-See [Service Layer](layers/service.md).
+See [Service Layer](../knowledge/service.md).
 
 ### 9. Add ViewModel When Needed
 
 Use a ViewModel only when the response shape differs from the Model.
 
-See [ViewModel Layer](layers/view-model.md).
+See [ViewModel Layer](../knowledge/view-model.md).
 
 ### 10. Add Tests
 

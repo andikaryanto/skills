@@ -13,20 +13,20 @@ This documentation defines reusable Laravel architecture and development workflo
 
 ## Layer Guides
 
-- [Controller](layers/controller.md)
-- [Middleware](layers/middleware.md)
-- [Model](layers/model.md)
-- [Repository](layers/repository.md)
-- [Query](layers/query.md)
-- [Service](layers/service.md)
-- [UnitOfWork Persistence](layers/unit-of-work.md)
-- [ViewModel](layers/view-model.md)
+- [Controller](../knowledge/controller.md)
+- [Middleware](../knowledge/middleware.md)
+- [Model](../knowledge/model.md)
+- [Repository](../knowledge/repository.md)
+- [Query](../knowledge/query.md)
+- [Service](../knowledge/service.md)
+- [UnitOfWork Persistence](../knowledge/unit-of-work.md)
+- [ViewModel](../knowledge/view-model.md)
 
 ## Recommended Reading Order
 
 1. `architecture.md`
 2. `development-workflow.md`
-3. `layers/*.md`
+3. `../knowledge/*.md`
 4. `naming.md`
 5. `api-response.md`
 6. `testing.md`
