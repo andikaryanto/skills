@@ -1,33 +1,20 @@
 # Laravel Development Workflow
 
 This document describes the end-to-end Laravel feature development workflow.
-Layer-specific implementation details live in `../knowledge/`.
 
-See also:
-
-- [Architecture](architecture.md)
-- [Controller Layer](../knowledge/controller.md)
-- [Middleware Layer](../knowledge/middleware.md)
-- [Model Layer](../knowledge/model.md)
-- [Repository Layer](../knowledge/repository.md)
-- [Query Layer](../knowledge/query.md)
-- [Service Layer](../knowledge/service.md)
-- [UnitOfWork Persistence](../knowledge/unit-of-work.md)
-- [ViewModel Layer](../knowledge/view-model.md)
-- [Naming Conventions](naming.md)
-- [API Response Standard](api-response.md)
-- [Testing Standard](testing.md)
-- [CRUD Example](examples/crud.md)
+Before implementation, read
+`.codex/knowledge/backend/architecture.md` and apply its multi-tenancy rules.
 
 ## Goal
 
 - Controllers stay thin and only manage HTTP flow.
 - Complex business logic belongs in Services.
-- Simple database access belongs in Repositories.
+- Simple database access belongs in Repositories.   
 - Complex database reads belong in Query classes.
 - Simple CRUD persistence belongs in UnitOfWorkService.
 - Request validation and hydration are handled by Middleware.
 - Models expose explicit getters and setters for testability.
+- Tenant-owned models extend `App\Models\BaseModel`.
 - API responses use response classes from `LaravelCommon\Responses`.
 
 ## Feature Workflow
@@ -42,6 +29,17 @@ Before writing implementation, define:
 - Possible error responses.
 - Permission or authentication requirement.
 - Main entity being processed.
+- Whether the entity is tenant-owned.
+
+For a tenant-owned entity:
+
+- Add a required indexed `tenant_id` foreign key in its migration.
+- Scope all reads and writes to the current tenant.
+- Make uniqueness validation tenant-scoped unless the value is intentionally
+  global.
+- Never accept the effective `tenant_id` from untrusted request input.
+- Add tests proving one tenant cannot read, update, delete, or conflict with
+  another tenant's records.
 
 Short contract example:
 
@@ -56,7 +54,7 @@ Response: ResourceCreatedResponse
 Add the route in the appropriate route file.
 
 Use validator and hydrator middleware as needed.
-See [Middleware Layer](../knowledge/middleware.md).
+See [Middleware Layer](.codex/knowledge/middleware.md).
 
 ### 3. Add Validator Middleware
 
@@ -68,29 +66,34 @@ Route usage example:
 ProductRequestValidatorMiddleware::class . ':post'
 ```
 
-See [Middleware Layer](../knowledge/middleware.md).
+See [Middleware Layer](.codex/knowledge/middleware.md).
 
 ### 4. Add Hydrator Middleware
 
 Hydrate request body and route parameters into the request attributes.
 
-See [Middleware Layer](../knowledge/middleware.md).
+See [Middleware Layer](.codex/knowledge/middleware.md).
 
 ### 5. Add Repository or Query
 
 Use a Repository for simple model persistence infrastructure.
 Use a Query class for complex reads, filters, and pagination.
 
+Query classes extend `App\Queries\BaseQuery`. Add
+`App\Queries\Concerns\TenantScoped` only when the query's table contains
+`tenant_id`. Tenant-owned Repository operations remain protected by the model
+tenant scope. Route-model hydration must not resolve another tenant's records.
+
 See:
 
-- [Repository Layer](../knowledge/repository.md)
-- [Query Layer](../knowledge/query.md)
+- [Repository Layer](.codex/knowledge/repository.md)
+- [Query Layer](.codex/knowledge/query.md)
 
 ### 6. Add Model Getters and Setters
 
 Expose explicit getter and setter methods for fields used by hydrators, queries, services, or tests.
 
-See [Model Layer](../knowledge/model.md).
+See [Model Layer](.codex/knowledge/model.md).
 
 ### 7. Implement Controller
 
@@ -107,9 +110,9 @@ For complex business logic:
 
 See:
 
-- [Controller Layer](../knowledge/controller.md)
-- [UnitOfWork Persistence](../knowledge/unit-of-work.md)
-- [Service Layer](../knowledge/service.md)
+- [Controller Layer](.codex/knowledge/controller.md)
+- [UnitOfWork Persistence](.codex/knowledge/unit-of-work.md)
+- [Service Layer](.codex/knowledge/service.md)
 
 ### 8. Add Service Only for Complex Logic
 
@@ -117,13 +120,13 @@ Do not create a domain Service only to wrap simple CRUD.
 
 Create a Service when the feature has business rules, orchestration, transactions, calculations, or state transitions.
 
-See [Service Layer](../knowledge/service.md).
+See [Service Layer](.codex/knowledge/service.md).
 
 ### 9. Add ViewModel When Needed
 
 Use a ViewModel only when the response shape differs from the Model.
 
-See [ViewModel Layer](../knowledge/view-model.md).
+See [ViewModel Layer](.codex/knowledge/view-model.md).
 
 ### 10. Add Tests
 
@@ -132,26 +135,13 @@ Minimum tests for a new feature:
 - Feature test for the endpoint happy path.
 - Feature test for validation errors.
 - Feature test for not found or unauthorized cases when relevant.
+- Dedicated focused test for each changed controller and middleware.
+- Dedicated focused test for each changed application class unless the testing
+  standard explicitly permits an exclusion.
 - Service test for complex business rules.
-- Query test for complex filters, sorting, or pagination.
+- Query test for every custom filter, plus sorting or pagination when present.
 
-See [Testing Standard](testing.md).
-
-### 11. Review Checklist
-
-Before merging, ensure:
-
-- Controllers do not contain business logic.
-- Services are not created only to wrap simple CRUD.
-- Services do not read `Request` directly.
-- Repositories only contain simple database access.
-- Complex reads are placed in Query classes.
-- Validator and hydrator middleware are used for request/route entities.
-- Models expose getter and setter methods for fields used by hydrators or domain logic.
-- Response classes follow method rules.
-- Class naming is consistent with the domain.
-- Error handling is explicit for important cases.
-- Tests cover the main happy paths and failure paths.
+See [Testing Standard](.codex/skills/developer/testing.md).
 
 ## Recommended Implementation Order
 

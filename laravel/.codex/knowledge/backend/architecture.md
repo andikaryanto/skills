@@ -1,25 +1,34 @@
 # Laravel Architecture
 
-See also:
+## Architecture Rules
 
-- [Development Workflow](development-workflow.md)
-- [Controller Layer](../knowledge/controller.md)
-- [Middleware Layer](../knowledge/middleware.md)
-- [Model Layer](../knowledge/model.md)
-- [Repository Layer](../knowledge/repository.md)
-- [Query Layer](../knowledge/query.md)
-- [Service Layer](../knowledge/service.md)
-- [UnitOfWork Persistence](../knowledge/unit-of-work.md)
-- [ViewModel Layer](../knowledge/view-model.md)
-- [Naming Conventions](naming.md)
-- [API Response Standard](api-response.md)
-- [Testing Standard](testing.md)
-- [CRUD Example](examples/crud.md)
+Always follow the Laravel workflow documentation and layer guides.
+
+Important rules:
+
+- Simple CRUD uses Query + UnitOfWorkService.
+- Services are only for complex business logic.
+- Validators use RequestValidatorMiddleware with action methods such as `:post` and `:patch`.
+- Hydrators extend HydratorMiddleware.
+- Models use explicit getters and setters.
+- Query classes handle complex reads, filtering, sorting, and pagination.
+- Repositories are only for simple database access.
+- API responses use LaravelCommon\Responses classes.
+- Service tests use Specify and Prophecy.
+
+## Multi-Tenancy
+
+- The project uses `spatie/laravel-multitenancy`.
+- All tenants share a single database.
+- Tenant-owned records must include and be scoped by `tenant_id`.
+- Query classes extend `App\Queries\BaseQuery`; tenant-owned Queries also use
+  `App\Queries\Concerns\TenantScoped`.
+- Queries, Services, background jobs, and console commands must preserve tenant isolation.
+- Code must not access data across tenants unless the requirement explicitly defines an authorized cross-tenant operation.
 
 ## Purpose
 
 This document defines the structure and responsibility boundaries for Laravel application layers.
-For the feature implementation flow, use `development-workflow.md`.
 
 ## Application Structure
 
@@ -144,7 +153,9 @@ Repositories are not used for complex listings, dynamic filters, joins, aggregat
 
 ### Queries
 
-Query classes are used for complex data reads and must extend `LaravelCommon\App\Queries\Query`.
+Query classes used for complex data reads extend `App\Queries\BaseQuery`.
+Tenant-owned Queries must also use `App\Queries\Concerns\TenantScoped`; global
+Queries omit the trait and are not filtered by `tenant_id`.
 
 Every Query class must define `identityClass()` and return the model class it represents.
 
@@ -163,7 +174,9 @@ Query classes must return data that is ready for Services to process, not HTTP r
 
 ### Models
 
-Models represent database data and relationships and should extend `LaravelCommon\App\Models\BaseModel`.
+Tenant-owned models represent database data and relationships and must extend
+`App\Models\BaseModel`. Global models may use their appropriate framework or
+package base model.
 
 Models may contain:
 

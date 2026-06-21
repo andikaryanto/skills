@@ -1,6 +1,11 @@
 # Model Layer
 
-Models represent database data and relationships and should extend `LaravelCommon\App\Models\BaseModel`.
+Tenant-owned models represent database data and relationships and must extend
+`App\Models\BaseModel`. This parent applies the current `tenant_id` on creation
+and scopes Eloquent reads to the current tenant.
+
+Global, non-tenant models may extend their appropriate framework or package
+model directly.
 
 ## Responsibilities
 

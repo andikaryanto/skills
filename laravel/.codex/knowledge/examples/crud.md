@@ -57,13 +57,13 @@ final class ProductController
     public function show(Request $request): SuccessResponse
     {
         return new SuccessResponse(
-            $request->attributes->get('product')
+            $request->getResource()
         );
     }
 
     public function store(Request $request): ResourceCreatedResponse
     {
-        $product = $request->attributes->get('product');
+        $product = $request->getResource();
         $this->unitOfWork->persist($product);
         $this->unitOfWork->flush();
 
@@ -74,7 +74,7 @@ final class ProductController
 
     public function update(Request $request): SuccessResponse
     {
-        $product = $request->attributes->get('product');
+        $product = $request->getResource();
         $this->unitOfWork->persist($product);
         $this->unitOfWork->flush();
 
@@ -85,7 +85,7 @@ final class ProductController
 
     public function destroy(Request $request): SuccessResponse
     {
-        $product = $request->attributes->get('product');
+        $product = $request->getResource();
         $this->unitOfWork->remove($product);
         $this->unitOfWork->flush();
 

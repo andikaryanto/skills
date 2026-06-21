@@ -2,6 +2,76 @@
 
 This document defines testing standards for Laravel features.
 
+## Core Principle
+
+Feature tests and focused class tests serve different purposes:
+
+- Feature tests verify that routes, middleware, controllers, persistence, and
+  responses work together from the API consumer's perspective.
+- Focused tests verify the smallest useful behavior of one application class,
+  with collaborators replaced or controlled where practical.
+
+Endpoint coverage does not replace focused coverage for a changed class.
+
+Every changed concrete application class with executable behavior must have a
+dedicated test class unless it qualifies for an exclusion below.
+
+## Changed-Class Coverage Audit
+
+Before writing tests:
+
+1. List production PHP files changed against `development`.
+2. Ignore tests, generated files, migrations, configuration arrays, and route
+   declaration files when building the class list.
+3. For each changed concrete application class, identify:
+   - dedicated test class;
+   - public methods;
+   - conditional branches and failure paths;
+   - existing feature or integration coverage;
+   - missing focused coverage.
+4. Do not finish until every class is marked `covered` or `excluded` with a
+   reason allowed by this document.
+
+Example:
+
+| Changed class | Dedicated test | Feature coverage | Status |
+| --- | --- | --- | --- |
+| `ProductController` | `ProductControllerTest` | `ProductApiTest` | Covered |
+| `ProductHydratorMiddleware` | `ProductHydratorMiddlewareTest` | `ProductApiTest` | Covered |
+
+## Test Location and Naming
+
+Mirror the application namespace under `tests/Unit` for focused tests:
+
+- `app/Http/Controllers/ProductController.php`
+  → `tests/Unit/Http/Controllers/ProductControllerTest.php`
+- `app/Http/Middleware/ProductHydratorMiddleware.php`
+  → `tests/Unit/Http/Middleware/ProductHydratorMiddlewareTest.php`
+
+Feature tests belong under `tests/Feature`.
+
+The dedicated test name must match the production class:
+
+- `ProductController` → `ProductControllerTest`
+- `ProductHydratorMiddleware` → `ProductHydratorMiddlewareTest`
+
+## Allowed Exclusions
+
+A dedicated focused test is not required by default for:
+
+- migrations;
+- route declaration files;
+- configuration files that only return static arrays;
+- framework bootstrap wiring with no project-specific branching;
+- empty marker classes or classes containing no executable project behavior.
+
+Factories should be exercised through model or feature tests. A separate factory
+test is required only when the factory contains states or custom behavior.
+
+Document every exclusion in the final test report. Do not exclude controllers,
+middleware, validators, services, queries, repositories, models, or view models
+only because a feature test executes them indirectly.
+
 ## Minimum Coverage
 
 New features must have at least:
@@ -9,12 +79,18 @@ New features must have at least:
 - Feature test for the happy path.
 - Feature test for validation errors.
 - Feature test for not found, unauthorized, or forbidden cases when relevant.
+- For tenant-owned data, feature tests proving cross-tenant reads and writes are
+  rejected and tenant-scoped uniqueness behaves correctly.
+- Focused test for each controller method and its collaborator interactions.
+- Focused test for each middleware's hydration, validation, or failure behavior.
 - Unit test for Services when business rules are complex enough.
 - Query test when filters, sorting, pagination, joins, or aggregations are complex enough.
 
 ## Feature Tests
 
 Feature tests focus on endpoint behavior from the API consumer's perspective.
+They provide integration confidence but do not count as the dedicated test for
+controllers or middleware.
 
 Tests to cover per method:
 
@@ -23,6 +99,34 @@ Tests to cover per method:
 - `POST`: validation runs, data is stored, response is created.
 - `PATCH`: data is changed, response is successful.
 - `DELETE`: data is deleted or status is changed, response is successful.
+
+## Controller Tests
+
+Test controller methods directly with controlled Requests and mocked or
+test-double collaborators.
+
+Cover:
+
+- the response type and resource passed to it;
+- query filters selected from request input;
+- `persist()`, `remove()`, and `flush()` interactions;
+- delegation to Services or Queries;
+- controller-specific branches.
+
+Do not repeat routing or middleware assertions here; those belong in feature
+tests.
+
+## Hydrator Middleware Tests
+
+Test hydration separately from the endpoint.
+
+Cover:
+
+- POST creates and hydrates a new model;
+- PATCH changes only supplied fields;
+- GET and DELETE resolve the requested model;
+- each mapped input invokes the correct model setter;
+- missing resources and hydration failures produce the expected response.
 
 ## Validation Tests
 
@@ -126,7 +230,9 @@ Mocking model getters and setters is allowed in Service tests when the Service o
 
 ## Query Tests
 
-Query tests are used to ensure complex data reads are correct.
+Every changed custom Query class requires a dedicated query test. Test custom
+filters even when they appear simple; add sorting, pagination, joins, and
+aggregation tests when implemented.
 
 Minimum tests:
 
@@ -135,6 +241,22 @@ Minimum tests:
 - Pagination.
 - Join or relation loading.
 - Aggregation when present.
+
+## Repository Tests
+
+Every changed custom Repository class requires a focused test for its
+project-specific model binding and any custom lookup or persistence behavior.
+Inherited vendor behavior does not need to be exhaustively retested.
+
+## ViewModel Tests
+
+Test:
+
+- response shape;
+- links;
+- type conversion;
+- conditional or embedded resources;
+- collection behavior, including rejected model types when applicable.
 
 ## Test Naming
 

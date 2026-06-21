@@ -24,7 +24,7 @@ Do not create a domain Service only to wrap simple CRUD persistence.
 ```php
 public function store(Request $request): ResourceCreatedResponse
 {
-    $product = $request->attributes->get('product');
+    $product = $request->getResource();
     $this->unitOfWork->persist($product);
     $this->unitOfWork->flush();
 
@@ -35,7 +35,7 @@ public function store(Request $request): ResourceCreatedResponse
 
 public function update(Request $request): SuccessResponse
 {
-    $product = $request->attributes->get('product');
+    $product = $request->getResource();
     $this->unitOfWork->persist($product);
     $this->unitOfWork->flush();
 
@@ -46,7 +46,7 @@ public function update(Request $request): SuccessResponse
 
 public function destroy(Request $request): SuccessResponse
 {
-    $product = $request->attributes->get('product');
+    $product = $request->getResource();
     $this->unitOfWork->remove($product);
     $this->unitOfWork->flush();
 

@@ -1,14 +1,15 @@
-# Feature Definition Workflow
+# New Feature Definition
 
 This document describes the workflow for defining a new feature before implementation.
 
-Implementation details belong in `development-workflow.md`.
+Implementation details belong in `.codex/skills/developer/development.md`.
 
 ## Goal
 
 Produce a complete feature contract before writing code.
 
-Do not start implementation if important requirements are missing.
+Do not start implementation if important requirements remain missing after
+inspecting the request, migrations, existing code, and tests.
 
 ## When to Use
 
@@ -126,7 +127,7 @@ Examples:
 
 ## Output
 
-Produce a feature contract document containing:
+Before implementation, establish a feature contract containing:
 
 - Entity definition.
 - Fields.
@@ -136,4 +137,8 @@ Produce a feature contract document containing:
 - Permissions.
 - Acceptance criteria.
 
-Wait for approval before implementation.
+If the contract is fully supported by the request and repository context,
+continue with `.codex/skills/developer/development.md`.
+
+Ask for approval or clarification only when a missing business decision would
+materially change the implementation.
